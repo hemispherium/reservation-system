@@ -9,7 +9,7 @@ export default function Top() {
 
   useEffect(() => {
     shopApi.listPublic()
-      .then((res) => setShops(res.data))
+      .then((res) => setShops(Array.isArray(res.data) ? res.data : []))
       .finally(() => setLoading(false))
   }, [])
 

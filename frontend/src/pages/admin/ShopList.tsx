@@ -10,7 +10,7 @@ export default function ShopList() {
 
   useEffect(() => {
     shopApi.list()
-      .then((res) => setShops(res.data))
+      .then((res) => setShops(Array.isArray(res.data) ? res.data : []))
       .catch((err) => setError(err.message ?? 'APIエラーが発生しました'))
       .finally(() => setLoading(false))
   }, [])
