@@ -1,24 +1,26 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom'
 import AdminLayout from './components/AdminLayout'
 import ShopForm from './pages/admin/ShopForm'
 import ShopList from './pages/admin/ShopList'
 import Top from './pages/Top'
 
+const router = createBrowserRouter([
+  { path: '/', element: <Top /> },
+  {
+    path: '/admin',
+    element: <AdminLayout />,
+    children: [
+      { index: true, element: <Navigate to="shops" replace /> },
+      { path: 'shops', element: <ShopList /> },
+      { path: 'shops/new', element: <ShopForm /> },
+      { path: 'shops/:id/edit', element: <ShopForm /> },
+    ],
+  },
+  { path: '*', element: <Navigate to="/" replace /> },
+])
+
 function App() {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Top />} />
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Navigate to="shops" replace />} />
-          <Route path="shops" element={<ShopList />} />
-          <Route path="shops/new" element={<ShopForm />} />
-          <Route path="shops/:id/edit" element={<ShopForm />} />
-        </Route>
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
-  )
+  return <RouterProvider router={router} />
 }
 
 export default App
