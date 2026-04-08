@@ -17,4 +17,9 @@ class Shop extends Model
     {
         return $this->hasMany(ShopImage::class)->orderBy('sort_order');
     }
+
+    public function staff()
+    {
+        return $this->belongsToMany(User::class);
+    }
 }

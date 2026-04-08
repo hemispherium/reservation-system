@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { shopApi, type Shop } from '../api/shops'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Top() {
   const [shops, setShops] = useState<Shop[]>([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
 
   useEffect(() => {
     shopApi.listPublic()
@@ -19,6 +21,22 @@ export default function Top() {
     <div style={pageStyle}>
       <header style={headerStyle}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>店舗一覧</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {user ? (
+            <>
+              <span style={{ fontSize: 14, color: '#475569' }}>{user.name}</span>
+              <button onClick={() => navigate('/admin')} style={headerBtnStyle}>管理画面</button>
+              <button onClick={logout} style={{ ...headerBtnStyle, background: '#f1f5f9', color: '#475569' }}>
+                ログアウト
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => navigate('/register')} style={{ ...headerBtnStyle, background: '#10b981' }}>新規登録</button>
+              <button onClick={() => navigate('/login')} style={headerBtnStyle}>ログイン</button>
+            </>
+          )}
+        </div>
       </header>
 
       <main style={mainStyle}>
@@ -64,6 +82,19 @@ const headerStyle: React.CSSProperties = {
   background: '#fff',
   borderBottom: '1px solid #e2e8f0',
   padding: '16px 32px',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+}
+const headerBtnStyle: React.CSSProperties = {
+  padding: '8px 16px',
+  background: '#3b82f6',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 6,
+  fontSize: 14,
+  fontWeight: 600,
+  cursor: 'pointer',
 }
 const mainStyle: React.CSSProperties = { padding: '32px' }
 const gridStyle: React.CSSProperties = {

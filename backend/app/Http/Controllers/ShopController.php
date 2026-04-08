@@ -18,4 +18,10 @@ class ShopController extends Controller
         $shop->load('images');
         return response()->json($shop);
     }
+
+    public function staff(Shop $shop): JsonResponse
+    {
+        $staff = $shop->staff()->get()->map(fn($u) => ['id' => $u->id, 'name' => $u->name, 'profile_image_url' => $u->profile_image_url]);
+        return response()->json($staff);
+    }
 }

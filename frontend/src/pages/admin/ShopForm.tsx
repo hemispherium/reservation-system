@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { shopApi, type Shop, type ShopImage } from '../../api/shops'
+import { shopApi, type Shop, type ShopImage, type StaffUser } from '../../api/shops'
 
 type FormValues = {
   name: string
@@ -17,15 +17,24 @@ export default function ShopForm() {
 
   const [values, setValues] = useState<FormValues>({ name: '', description: '', address: '', phone: '' })
   const [images, setImages] = useState<ShopImage[]>([])
+  const [allStaff, setAllStaff] = useState<StaffUser[]>([])
+  const [assignedIds, setAssignedIds] = useState<Set<number>>(new Set())
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
+  const [staffSaving, setStaffSaving] = useState(false)
 
   useEffect(() => {
+    shopApi.listStaffUsers().then((res) => setAllStaff(res.data))
+
     if (!isEdit) return
-    shopApi.get(Number(id)).then((res) => {
-      const shop: Shop = res.data
+    Promise.all([
+      shopApi.get(Number(id)),
+      shopApi.getShopStaff(Number(id)),
+    ]).then(([shopRes, staffRes]) => {
+      const shop: Shop = shopRes.data
       setValues({ name: shop.name, description: shop.description ?? '', address: shop.address, phone: shop.phone })
       setImages(shop.images)
+      setAssignedIds(new Set(staffRes.data.map((u) => u.id)))
       setLoading(false)
     })
   }, [id, isEdit])
@@ -46,6 +55,23 @@ export default function ShopForm() {
       navigate('/admin/shops')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleToggleStaff = (userId: number) => {
+    setAssignedIds((prev) => {
+      const next = new Set(prev)
+      next.has(userId) ? next.delete(userId) : next.add(userId)
+      return next
+    })
+  }
+
+  const handleSaveStaff = async () => {
+    setStaffSaving(true)
+    try {
+      await shopApi.syncShopStaff(Number(id), Array.from(assignedIds))
+    } finally {
+      setStaffSaving(false)
     }
   }
 
@@ -97,28 +123,59 @@ export default function ShopForm() {
       </form>
 
       {isEdit && (
-        <div style={{ marginTop: 40 }}>
-          <h2>画像</h2>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
-            {images.map((img) => (
-              <div key={img.id} style={{ position: 'relative' }}>
-                <img src={img.url} alt="" style={{ width: 120, height: 90, objectFit: 'cover', borderRadius: 4 }} />
-                <button
-                  onClick={() => handleDeleteImage(img.id)}
-                  style={{
-                    position: 'absolute', top: 4, right: 4,
-                    background: 'rgba(0,0,0,0.6)', color: '#fff',
-                    border: 'none', borderRadius: '50%', width: 22, height: 22,
-                    cursor: 'pointer', fontSize: 12, lineHeight: '22px', padding: 0,
-                  }}
-                >
-                  ×
+        <>
+          {/* スタッフ割り当て */}
+          <div style={sectionStyle}>
+            <h2 style={sectionTitleStyle}>担当スタッフ</h2>
+            {allStaff.length === 0 ? (
+              <p style={{ color: '#64748b', fontSize: 14 }}>スタッフが登録されていません。</p>
+            ) : (
+              <>
+                <div style={staffGridStyle}>
+                  {allStaff.map((u) => (
+                    <label key={u.id} style={staffLabelStyle(assignedIds.has(u.id))}>
+                      <input
+                        type="checkbox"
+                        checked={assignedIds.has(u.id)}
+                        onChange={() => handleToggleStaff(u.id)}
+                        style={{ marginRight: 8 }}
+                      />
+                      <span style={{ fontWeight: 600 }}>{u.name}</span>
+                      <span style={{ fontSize: 12, color: '#64748b', marginLeft: 4 }}>{u.email}</span>
+                    </label>
+                  ))}
+                </div>
+                <button onClick={handleSaveStaff} disabled={staffSaving} style={saveStaffBtnStyle}>
+                  {staffSaving ? '保存中...' : 'スタッフを保存'}
                 </button>
-              </div>
-            ))}
+              </>
+            )}
           </div>
-          <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} />
-        </div>
+
+          {/* 画像 */}
+          <div style={sectionStyle}>
+            <h2 style={sectionTitleStyle}>画像</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+              {images.map((img) => (
+                <div key={img.id} style={{ position: 'relative' }}>
+                  <img src={img.url} alt="" style={{ width: 120, height: 90, objectFit: 'cover', borderRadius: 4 }} />
+                  <button
+                    onClick={() => handleDeleteImage(img.id)}
+                    style={{
+                      position: 'absolute', top: 4, right: 4,
+                      background: 'rgba(0,0,0,0.6)', color: '#fff',
+                      border: 'none', borderRadius: '50%', width: 22, height: 22,
+                      cursor: 'pointer', fontSize: 12, lineHeight: '22px', padding: 0,
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleImageUpload} />
+          </div>
+        </>
       )}
     </div>
   )
@@ -126,3 +183,27 @@ export default function ShopForm() {
 
 const labelStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 500 }
 const inputStyle: React.CSSProperties = { padding: '8px 10px', border: '1px solid #cbd5e1', borderRadius: 4, fontSize: 14 }
+const sectionStyle: React.CSSProperties = { marginTop: 40 }
+const sectionTitleStyle: React.CSSProperties = { marginTop: 0, marginBottom: 16 }
+const staffGridStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }
+const staffLabelStyle = (checked: boolean): React.CSSProperties => ({
+  display: 'flex',
+  alignItems: 'center',
+  padding: '10px 14px',
+  border: `1px solid ${checked ? '#3b82f6' : '#e2e8f0'}`,
+  borderRadius: 6,
+  background: checked ? '#eff6ff' : '#fff',
+  cursor: 'pointer',
+  fontSize: 14,
+  color: '#1e293b',
+})
+const saveStaffBtnStyle: React.CSSProperties = {
+  padding: '8px 20px',
+  background: '#3b82f6',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 6,
+  fontSize: 14,
+  fontWeight: 600,
+  cursor: 'pointer',
+}

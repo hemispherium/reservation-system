@@ -24,6 +24,13 @@ export type ShopInput = {
   phone: string
 }
 
+export type StaffUser = {
+  id: number
+  name: string
+  email: string
+  profile_image_url?: string | null
+}
+
 export const shopApi = {
   listPublic: () => client.get<Shop[]>('/shops'),
   getPublic: (id: number) => client.get<Shop>(`/shops/${id}`),
@@ -46,4 +53,16 @@ export const shopApi = {
 
   reorderImages: (shopId: number, order: number[]) =>
     client.patch<ShopImage[]>(`/admin/shops/${shopId}/images/reorder`, { order }),
+
+  getShopStaff: (shopId: number) =>
+    client.get<StaffUser[]>(`/admin/shops/${shopId}/staff`),
+
+  syncShopStaff: (shopId: number, userIds: number[]) =>
+    client.put<StaffUser[]>(`/admin/shops/${shopId}/staff`, { user_ids: userIds }),
+
+  listStaffUsers: () =>
+    client.get<StaffUser[]>('/admin/staff-users'),
+
+  getPublicStaff: (shopId: number) =>
+    client.get<StaffUser[]>(`/shops/${shopId}/staff`),
 }
