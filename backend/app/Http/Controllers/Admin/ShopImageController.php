@@ -26,7 +26,7 @@ class ShopImageController extends Controller
         foreach ($request->file('images') as $file) {
             $result = $this->cloudinary->uploadApi()->upload(
                 $file->getRealPath(),
-                ['folder' => "reservation_system/" . config('app.env') . "/shops/{$shop->id}"]
+                ['folder' => "reservation_system/" . trim(config('app.env')) . "/shops/{$shop->id}"]
             );
 
             $created[] = $shop->images()->create([
