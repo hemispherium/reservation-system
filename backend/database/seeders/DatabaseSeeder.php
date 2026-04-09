@@ -68,13 +68,18 @@ class DatabaseSeeder extends Seeder
             ['name' => '岩崎', 'email' => 'iwasaki@example.com'],
         ];
 
+        $createdStaff = [];
         foreach ($staffUsers as $data) {
             $user = User::firstOrCreate(
                 ['email' => $data['email']],
                 ['name' => $data['name'], 'password' => Hash::make('password')]
             );
             $user->syncRoles([$staff]);
+            $createdStaff[] = $user->id;
         }
+
+        // スタッフを店舗に紐付け
+        $shop->staff()->syncWithoutDetaching($createdStaff);
 
         $this->call(ShopScheduleSeeder::class);
     }
