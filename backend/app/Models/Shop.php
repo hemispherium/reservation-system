@@ -22,4 +22,14 @@ class Shop extends Model
     {
         return $this->belongsToMany(User::class);
     }
+
+    public function schedules()
+    {
+        return $this->hasMany(ShopUserSchedule::class);
+    }
+
+    public function courses()
+    {
+        return $this->hasMany(Course::class)->orderBy('sort_order');
+    }
 }

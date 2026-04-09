@@ -26,6 +26,7 @@ export default function Top() {
             <>
               <span style={{ fontSize: 14, color: '#475569' }}>{user.name}</span>
               <button onClick={() => navigate('/admin')} style={headerBtnStyle}>管理画面</button>
+              <button onClick={() => navigate('/mypage')} style={{ ...headerBtnStyle, background: '#6366f1' }}>マイページ</button>
               <button onClick={logout} style={{ ...headerBtnStyle, background: '#f1f5f9', color: '#475569' }}>
                 ログアウト
               </button>

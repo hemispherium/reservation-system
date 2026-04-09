@@ -44,5 +44,7 @@ class DatabaseSeeder extends Seeder
             );
             $user->syncRoles([$staff]);
         }
+
+        $this->call(ShopScheduleSeeder::class);
     }
 }

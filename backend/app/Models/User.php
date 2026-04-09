@@ -33,6 +33,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Shop::class);
     }
 
+    public function schedules()
+    {
+        return $this->hasMany(ShopUserSchedule::class);
+    }
+
     protected function profileImageUrl(): Attribute
     {
         return Attribute::get(function () {

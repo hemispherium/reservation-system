@@ -66,10 +66,13 @@ export default function ShopDetail() {
           </div>
         )}
 
-        {/* 店舗名 */}
-        <h1 style={{ margin: '0 0 24px', fontSize: 28, fontWeight: 700, color: '#1e293b' }}>
-          {shop.name}
-        </h1>
+        {/* 店舗名 + 予約ボタン */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: '#1e293b' }}>
+            {shop.name}
+          </h1>
+          <button onClick={() => navigate(`/shops/${id}/reserve`)} style={reserveBtnStyle}>空席確認・予約</button>
+        </div>
 
         {/* タブ */}
         <div style={tabBarStyle}>
@@ -132,6 +135,17 @@ const headerStyle: React.CSSProperties = {
   background: '#fff',
   borderBottom: '1px solid #e2e8f0',
   padding: '12px 32px',
+}
+const reserveBtnStyle: React.CSSProperties = {
+  padding: '10px 24px',
+  background: '#10b981',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 8,
+  fontSize: 15,
+  fontWeight: 700,
+  cursor: 'pointer',
+  whiteSpace: 'nowrap',
 }
 const backBtnStyle: React.CSSProperties = {
   background: 'none',

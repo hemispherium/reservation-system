@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { shopApi, type Shop, type ShopImage, type StaffUser } from '../../api/shops'
+import { shopApi, type Shop, type ShopImage, type StaffUser, type StaffSchedule } from '../../api/shops'
+import { courseApi, type Course } from '../../api/courses'
+import StaffScheduleEditor from '../../components/StaffScheduleEditor'
+import CourseManager from '../../components/CourseManager'
 
 type FormValues = {
   name: string
@@ -19,9 +22,14 @@ export default function ShopForm() {
   const [images, setImages] = useState<ShopImage[]>([])
   const [allStaff, setAllStaff] = useState<StaffUser[]>([])
   const [assignedIds, setAssignedIds] = useState<Set<number>>(new Set())
+  const [staffSchedules, setStaffSchedules] = useState<StaffSchedule[]>([])
+  const [courses, setCourses] = useState<Course[]>([])
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
   const [staffSaving, setStaffSaving] = useState(false)
+
+  const scheduleFrom = new Date().toISOString().slice(0, 10)
+  const scheduleTo = new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().slice(0, 10)
 
   useEffect(() => {
     shopApi.listStaffUsers().then((res) => setAllStaff(res.data))
@@ -30,11 +38,15 @@ export default function ShopForm() {
     Promise.all([
       shopApi.get(Number(id)),
       shopApi.getShopStaff(Number(id)),
-    ]).then(([shopRes, staffRes]) => {
+      shopApi.getSchedules(Number(id), scheduleFrom, scheduleTo),
+      courseApi.list(Number(id)),
+    ]).then(([shopRes, staffRes, scheduleRes, courseRes]) => {
       const shop: Shop = shopRes.data
       setValues({ name: shop.name, description: shop.description ?? '', address: shop.address, phone: shop.phone })
       setImages(shop.images)
       setAssignedIds(new Set(staffRes.data.map((u) => u.id)))
+      setStaffSchedules(scheduleRes.data)
+      setCourses(courseRes.data)
       setLoading(false)
     })
   }, [id, isEdit])
@@ -70,6 +82,8 @@ export default function ShopForm() {
     setStaffSaving(true)
     try {
       await shopApi.syncShopStaff(Number(id), Array.from(assignedIds))
+      const scheduleRes = await shopApi.getSchedules(Number(id), scheduleFrom, scheduleTo)
+      setStaffSchedules(scheduleRes.data)
     } finally {
       setStaffSaving(false)
     }
@@ -150,6 +164,18 @@ export default function ShopForm() {
                 </button>
               </>
             )}
+          </div>
+
+          {/* コース管理 */}
+          <div style={sectionStyle}>
+            <h2 style={sectionTitleStyle}>コース</h2>
+            <CourseManager shopId={Number(id)} courses={courses} onChange={setCourses} />
+          </div>
+
+          {/* 勤務時間 */}
+          <div style={sectionStyle}>
+            <h2 style={sectionTitleStyle}>勤務時間</h2>
+            <StaffScheduleEditor shopId={Number(id)} staffSchedules={staffSchedules} from={scheduleFrom} to={scheduleTo} />
           </div>
 
           {/* 画像 */}

@@ -6,8 +6,10 @@ import UserList from './pages/admin/UserList'
 import UserForm from './pages/admin/UserForm'
 import Top from './pages/Top'
 import ShopDetail from './pages/ShopDetail'
+import Reserve from './pages/Reserve'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import MyPage from './pages/MyPage'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
@@ -27,7 +29,9 @@ function RequireAdmin({ children }: { children: React.ReactNode }) {
 const router = createBrowserRouter([
   { path: '/', element: <Top /> },
   { path: '/shops/:id', element: <ShopDetail /> },
+  { path: '/shops/:id/reserve', element: <Reserve /> },
   { path: '/login', element: <Login /> },
+  { path: '/mypage', element: <RequireAuth><MyPage /></RequireAuth> },
   { path: '/register', element: <Register /> },
   {
     path: '/admin',

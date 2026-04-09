@@ -31,6 +31,27 @@ export type StaffUser = {
   profile_image_url?: string | null
 }
 
+export type ScheduleEntry = {
+  id: number
+  date: string
+  start_time: string | null
+  end_time: string | null
+  is_day_off: boolean
+}
+
+export type StaffSchedule = {
+  user_id: number
+  name: string
+  schedules: ScheduleEntry[]
+}
+
+export type ScheduleInput = {
+  date: string
+  is_day_off: boolean
+  start_time: string | null
+  end_time: string | null
+}
+
 export const shopApi = {
   listPublic: () => client.get<Shop[]>('/shops'),
   getPublic: (id: number) => client.get<Shop>(`/shops/${id}`),
@@ -63,6 +84,27 @@ export const shopApi = {
   listStaffUsers: () =>
     client.get<StaffUser[]>('/admin/staff-users'),
 
-  getPublicStaff: (shopId: number) =>
-    client.get<StaffUser[]>(`/shops/${shopId}/staff`),
+  getPublicStaff: (shopId: number, date?: string, startTime?: string, endTime?: string) =>
+    client.get<StaffUser[]>(`/shops/${shopId}/staff`, {
+      params: { ...(date && { date }), ...(startTime && { start_time: startTime }), ...(endTime && { end_time: endTime }) },
+    }),
+
+  getPublicSchedules: (shopId: number, from: string, to: string) =>
+    client.get<{ user_id: number; date: string; start_time: string; end_time: string }[]>(
+      `/shops/${shopId}/schedules`, { params: { from, to } }
+    ),
+
+  getBookedSlots: (shopId: number, from: string, to: string) =>
+    client.get<{ date: string; start_time: string; end_time: string }[]>(
+      `/shops/${shopId}/booked`, { params: { from, to } }
+    ),
+
+  getSchedules: (shopId: number, from?: string, to?: string) =>
+    client.get<StaffSchedule[]>(`/admin/shops/${shopId}/schedules`, { params: { from, to } }),
+
+  upsertSchedule: (shopId: number, userId: number, input: ScheduleInput) =>
+    client.put<ScheduleEntry>(`/admin/shops/${shopId}/schedules/${userId}`, input),
+
+  deleteSchedule: (shopId: number, userId: number, date: string) =>
+    client.delete(`/admin/shops/${shopId}/schedules/${userId}/${date}`),
 }
