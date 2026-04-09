@@ -21,8 +21,10 @@ Route::get('shops/{shop}/staff', [ShopController::class, 'staff']);
 Route::get('shops/{shop}/schedules', [ShopController::class, 'schedules']);
 Route::get('shops/{shop}/booked', [ShopController::class, 'bookedSlots']);
 Route::get('shops/{shop}/courses', [CourseController::class, 'index']);
-Route::post('shops/{shop}/payment-intent', [PaymentController::class, 'createIntent']);
-Route::post('shops/{shop}/reservations', [ReservationController::class, 'store']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('shops/{shop}/payment-intent', [PaymentController::class, 'createIntent']);
+    Route::post('shops/{shop}/reservations', [ReservationController::class, 'store']);
+});
 
 // 認証ルート
 Route::post('auth/register', [AuthController::class, 'register']);

@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Stripe\StripeClient;
 
+
 class ReservationController extends Controller
 {
     public function index(Request $request): JsonResponse
@@ -53,13 +54,6 @@ class ReservationController extends Controller
             return response()->json(['message' => 'この時間帯はすでに予約が入っています。'], 422);
         }
 
-        // トークンがあればユーザーを解決（任意認証）
-        $userId = null;
-        $token = $request->bearerToken();
-        if ($token) {
-            $userId = \Laravel\Sanctum\PersonalAccessToken::findToken($token)?->tokenable_id;
-        }
-
         // 決済確認
         $stripe = new StripeClient(config('services.stripe.secret'));
         $intent = $stripe->paymentIntents->retrieve($data['stripe_payment_intent_id']);
@@ -83,7 +77,7 @@ class ReservationController extends Controller
         $reservation = Reservation::create([
             'shop_id'        => $shop->id,
             'course_id'      => $course->id,
-            'user_id'        => $userId,
+            'user_id'        => $request->user()->id,
             'staff_user_id'  => $staffUserId,
             'guest_name'     => $data['guest_name'],
             'guest_email'    => $data['guest_email'],

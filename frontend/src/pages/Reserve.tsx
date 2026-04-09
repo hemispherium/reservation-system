@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { shopApi, type Shop } from '../api/shops'
 import { courseApi, type Course } from '../api/courses'
 import ReservationModal from '../components/ReservationModal'
+import { useAuth } from '../contexts/AuthContext'
 
 const START_HOUR = 9
 const END_HOUR = 21
@@ -82,6 +83,13 @@ const slots = generateSlots()
 export default function Reserve() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user, loading: authLoading } = useAuth()
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/login', { replace: true })
+    }
+  }, [user, authLoading])
   const [shop, setShop] = useState<Shop | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null)
