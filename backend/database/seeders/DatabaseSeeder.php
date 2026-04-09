@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Course;
+use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -14,6 +16,35 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
+        // 店舗作成
+        $shop = Shop::firstOrCreate(
+            ['name' => 'Bodyshリンクスウメダ店'],
+            [
+                'address'     => '大阪府大阪市北区大深町１－１ヨドバシ梅田タワー７階',
+                'phone'       => '06012341234',
+                'description' => null,
+            ]
+        );
+
+        // コース作成
+        $courses = [
+            ['name' => '60分コース', 'duration' => 60, 'price' => 7260, 'description' => '60分コースです。', 'sort_order' => 1],
+            ['name' => '70分コース', 'duration' => 70, 'price' => 8470, 'description' => '70分コースです。', 'sort_order' => 2],
+        ];
+
+        foreach ($courses as $course) {
+            Course::firstOrCreate(
+                ['shop_id' => $shop->id, 'name' => $course['name']],
+                [
+                    'duration'    => $course['duration'],
+                    'price'       => $course['price'],
+                    'description' => $course['description'],
+                    'is_active'   => true,
+                    'sort_order'  => $course['sort_order'],
+                ]
+            );
+        }
+
         // ロール作成
         $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $staff = Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'web']);
