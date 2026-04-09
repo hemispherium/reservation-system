@@ -8,6 +8,7 @@ use App\Models\Shop;
 use App\Models\ShopUserSchedule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Stripe\StripeClient;
 
 class ReservationController extends Controller
 {
@@ -25,14 +26,15 @@ class ReservationController extends Controller
     public function store(Request $request, Shop $shop): JsonResponse
     {
         $data = $request->validate([
-            'course_id'      => 'required|integer|exists:courses,id',
-            'staff_user_id'  => 'nullable|integer|exists:users,id',
-            'date'           => 'required|date_format:Y-m-d',
-            'start_time'     => 'required|date_format:H:i',
-            'guest_name'     => 'required|string|max:255',
-            'guest_email'    => 'required|email',
-            'guest_phone'    => 'nullable|string|max:20',
-            'note'           => 'nullable|string',
+            'course_id'              => 'required|integer|exists:courses,id',
+            'staff_user_id'          => 'nullable|integer|exists:users,id',
+            'date'                   => 'required|date_format:Y-m-d',
+            'start_time'             => 'required|date_format:H:i',
+            'guest_name'             => 'required|string|max:255',
+            'guest_email'            => 'required|email',
+            'guest_phone'            => 'nullable|string|max:20',
+            'note'                   => 'nullable|string',
+            'stripe_payment_intent_id' => 'required|string',
         ]);
 
         $course = Course::findOrFail($data['course_id']);
@@ -56,6 +58,13 @@ class ReservationController extends Controller
         $token = $request->bearerToken();
         if ($token) {
             $userId = \Laravel\Sanctum\PersonalAccessToken::findToken($token)?->tokenable_id;
+        }
+
+        // 決済確認
+        $stripe = new StripeClient(config('services.stripe.secret'));
+        $intent = $stripe->paymentIntents->retrieve($data['stripe_payment_intent_id']);
+        if ($intent->status !== 'succeeded') {
+            return response()->json(['message' => '決済が完了していません。'], 422);
         }
 
         // 指名なしの場合、その時間帯に出勤しているスタッフをランダムに割り振る
@@ -82,8 +91,9 @@ class ReservationController extends Controller
             'date'           => $data['date'],
             'start_time'     => $data['start_time'],
             'end_time'       => $end->format('H:i'),
-            'status'         => 'confirmed',
-            'note'           => $data['note'] ?? null,
+            'status'                   => 'confirmed',
+            'note'                     => $data['note'] ?? null,
+            'stripe_payment_intent_id' => $data['stripe_payment_intent_id'],
         ]);
 
         return response()->json($reservation->load('course'), 201);

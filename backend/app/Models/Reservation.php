@@ -10,7 +10,7 @@ class Reservation extends Model
         'shop_id', 'course_id', 'user_id', 'staff_user_id',
         'guest_name', 'guest_email', 'guest_phone',
         'date', 'start_time', 'end_time',
-        'status', 'note',
+        'status', 'note', 'stripe_payment_intent_id',
     ];
 
     public function shop()      { return $this->belongsTo(Shop::class); }

@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserImageController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\ShopController;
 use Illuminate\Support\Facades\Route;
@@ -20,6 +21,7 @@ Route::get('shops/{shop}/staff', [ShopController::class, 'staff']);
 Route::get('shops/{shop}/schedules', [ShopController::class, 'schedules']);
 Route::get('shops/{shop}/booked', [ShopController::class, 'bookedSlots']);
 Route::get('shops/{shop}/courses', [CourseController::class, 'index']);
+Route::post('shops/{shop}/payment-intent', [PaymentController::class, 'createIntent']);
 Route::post('shops/{shop}/reservations', [ReservationController::class, 'store']);
 
 // 認証ルート

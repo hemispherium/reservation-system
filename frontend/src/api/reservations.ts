@@ -5,10 +5,12 @@ export interface ReservationInput {
   staff_user_id?: number | null
   date: string
   start_time: string
+  end_time?: string
   guest_name: string
   guest_email: string
   guest_phone?: string
   note?: string
+  stripe_payment_intent_id: string
 }
 
 export interface Reservation {
@@ -28,6 +30,9 @@ export interface Reservation {
 }
 
 export const reservationApi = {
+  createPaymentIntent: (shopId: number, courseId: number) =>
+    client.post<{ client_secret: string }>(`/shops/${shopId}/payment-intent`, { course_id: courseId }),
+
   create: (shopId: number, data: ReservationInput) =>
     client.post<Reservation>(`/shops/${shopId}/reservations`, data),
 
