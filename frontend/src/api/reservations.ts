@@ -38,4 +38,7 @@ export const reservationApi = {
 
   myList: () =>
     client.get<Reservation[]>('/my/reservations'),
+
+  myBookedSlots: (from: string, to: string) =>
+    client.get<Reservation[]>('/my/reservations', { params: { from, to } }),
 }

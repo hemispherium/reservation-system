@@ -15,11 +15,14 @@ class ReservationController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $reservations = Reservation::where('user_id', $request->user()->id)
-            ->with(['shop:id,name', 'course:id,name,duration,price', 'staffUser:id,name'])
-            ->orderByDesc('date')
-            ->orderByDesc('start_time')
-            ->get();
+        $query = Reservation::where('user_id', $request->user()->id)
+            ->with(['shop:id,name', 'course:id,name,duration,price', 'staffUser:id,name']);
+
+        if ($request->has('from') && $request->has('to')) {
+            $query->whereBetween('date', [$request->query('from'), $request->query('to')]);
+        }
+
+        $reservations = $query->orderByDesc('date')->orderByDesc('start_time')->get();
 
         return response()->json($reservations);
     }
@@ -52,6 +55,18 @@ class ReservationController extends Controller
 
         if ($overlap) {
             return response()->json(['message' => 'この時間帯はすでに予約が入っています。'], 422);
+        }
+
+        // 自分の予約との重複チェック（他店舗含む）
+        $myOverlap = Reservation::where('user_id', $request->user()->id)
+            ->where('date', $data['date'])
+            ->where('status', 'confirmed')
+            ->where('start_time', '<', $end->format('H:i'))
+            ->where('end_time', '>', $data['start_time'])
+            ->exists();
+
+        if ($myOverlap) {
+            return response()->json(['message' => 'この時間帯にはすでに別の予約があります。'], 422);
         }
 
         // 決済確認

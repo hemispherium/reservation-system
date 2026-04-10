@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { shopApi, type Shop } from '../api/shops'
 import { courseApi, type Course } from '../api/courses'
+import { reservationApi } from '../api/reservations'
 import ReservationModal from '../components/ReservationModal'
 import { useAuth } from '../contexts/AuthContext'
 
@@ -127,11 +128,14 @@ export default function Reserve() {
     Promise.all([
       shopApi.getPublicSchedules(Number(id), from, to),
       shopApi.getBookedSlots(Number(id), from, to),
+      reservationApi.myBookedSlots(from, to),
     ])
-      .then(([schedRes, bookedRes]) => {
+      .then(([schedRes, bookedRes, myRes]) => {
         const sMap: CountMap = {}
         const bMap: CountMap = {}
-        for (const date of dates) { sMap[date] = {}; bMap[date] = {} }
+        // date → slot → 自分の予約があるか
+        const myMap: Record<string, Record<string, boolean>> = {}
+        for (const date of dates) { sMap[date] = {}; bMap[date] = {}; myMap[date] = {} }
 
         // スタッフ1人ぶんの出勤スロットをカウントアップ
         for (const sched of schedRes.data) {
@@ -146,7 +150,7 @@ export default function Reserve() {
           }
         }
 
-        // 予約1件ぶんのスロットをカウントアップ
+        // 店舗の予約1件ぶんのスロットをカウントアップ
         for (const booked of bookedRes.data) {
           const dateMap = bMap[booked.date]
           if (!dateMap) continue
@@ -156,6 +160,27 @@ export default function Reserve() {
             const slotMin = timeToMinutes(slot)
             if (slotMin >= startMin && slotMin < endMin)
               dateMap[slot] = (dateMap[slot] ?? 0) + 1
+          }
+        }
+
+        // 自分の予約スロットを完全にブロック
+        for (const my of myRes.data) {
+          if (my.status !== 'confirmed') continue
+          const dateMap = myMap[my.date]
+          if (!dateMap) continue
+          const startMin = timeToMinutes(my.start_time.slice(0, 5))
+          const endMin = timeToMinutes(my.end_time.slice(0, 5))
+          for (const slot of slots) {
+            const slotMin = timeToMinutes(slot)
+            if (slotMin >= startMin && slotMin < endMin)
+              dateMap[slot] = true
+          }
+        }
+
+        // 自分の予約がある場合は staffMap を 0 にして確実に ✖ にする
+        for (const date of dates) {
+          for (const slot of slots) {
+            if (myMap[date]?.[slot]) sMap[date][slot] = 0
           }
         }
 
